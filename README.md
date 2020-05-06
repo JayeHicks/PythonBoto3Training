@@ -13,6 +13,6 @@ Both modules work across the “Boto3 Resource” and the “Boto3 Client” API
 Outside of Boto3, both modules only make use of modules from the Python 3.x Standard Library.  And finally, both modules have the ability to be run as a stand-alone script or to be imported by another module.  
 
 # License
-This project is licensed under the GNU Public License v3.0.  For details see: https://github.com/JayeHicks/DynamicDashboard/blob/master/LICENSE
+This project is licensed under the GNU Public License v3.0.  For details see: https://github.com/JayeHicks/PythonBoto3Training/blob/master/LICENSE
 
 
