@@ -10,7 +10,9 @@ The module S3_man.py is suitable for longer, intermediate-level training.  It im
 
 Both modules work across the “Boto3 Resource” and the “Boto3 Client” API sets.   Additionally, both can be run using the default profile contained in the “<some directory path>/.aws/credentials” file (i.e., created during installation of the AWS CLI) or using an IAM user of your choice.  To execute a module's functionality using an IAM user of your choice, you supply the AWS IAM access key id and the AWS IAM secret access key as parameters to  a function call or a command line operation.  If you do so, you also have the option of specifying which AWS regional endpoint will be used when communicating with the S3 service.
 
-Outside of Boto3, both modules only make use of modules from the Python 3.x Standard Library.  And finally, both modules have the ability to be run as a stand-alone script or to be imported by another module.  
+Outside of Boto3, both modules only make use of modules from the Python 3.x Standard Library.  And finally, both modules have the ability to be run as a stand-alone script or to be imported by another module.
+
+If for some reason you wanted to use these scripts for something more than training you would need to productize them (e.g., enable logging and surround all of the calls to AWS endpoints with "try" / "except" blocks.
 
 # License
 This project is licensed under the GNU Public License v3.0.  For details see: https://github.com/JayeHicks/PythonBoto3Training/blob/master/LICENSE
