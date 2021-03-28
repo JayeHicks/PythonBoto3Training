@@ -102,26 +102,22 @@ Dependencies:
   botocore.exception.ClientError
   s3_list
 """
-from io import IOBase
 import argparse
 import logging
 import re
 import boto3
-from botocore.exceptions import ClientError
+from   botocore.exceptions import ClientError
+from   io                  import IOBase
 import s3_list
 
-__all__ = ['s3_man']
-
-
-#logging.basicConfig(filename='s3_man.log',level=logging.INFO)
+__all__        = ['s3_man']
 custom_session = None
+logging.basicConfig(filename='s3_man.log',level=logging.INFO)
 
 
 def _valid_ipv4_address(address):
   """ Verify arg is valid IPv4 address; between 0.0.0.0 and 
   255.255.255.255.  Failing test returns either 'None' or 'False'
-  
-  Not a public function. Only called with argument of type str.
   """
   #legal chars limited to numbers (i.e., 0 - 255) and '.'
   RE_MATCH_OCTECT = r'(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'
@@ -135,29 +131,25 @@ def _valid_ipv4_address(address):
                              + RE_MATCH_OCTECT 
                        + r'\b')
      
-  return ((re.match(RE_MATCH_VALID_ADDR, address)) and
-          (address.count('.') == 3))  #ensure exactly four octets
+  return((re.match(RE_MATCH_VALID_ADDR, address)) and
+         (address.count('.') == 3))  #ensure exactly four octets
 
 
 def _similar_to_ipv4_address(address):
   """ Verify arg in IPv4 format; between 0.0.0.0 - 999.999.999.999
-  
-  Not a public function. Only called with argument of type str.
   """
   #legal characters limited to numbers and '.'
   if(re.match(r'^[0-9.]+$', address)):
     if(address.count('..') < 1):
       if(address.count('.') == 3):   #ensure exactly four octects
-        return True
+        return(True)
 
-  return False  
+  return(False)  
 
   
 def _validate_s3_name_format(bucket_name):
   """ NOTE: uses naming standard starting 3/2018; us-east-1 no longer 
   accepts upper case letters and underscores for creating new buckets.
-  
-  Not a public function. Only called with argument of type str.
   """
   if((len(bucket_name) > 2) and (len(bucket_name) < 64)):
     if((bucket_name[0].isalnum()) and (bucket_name[-1].isalnum())):
@@ -170,14 +162,12 @@ def _validate_s3_name_format(bucket_name):
              (not '.-' in bucket_name)):
             if((not _valid_ipv4_address(bucket_name)) and
                (not _similar_to_ipv4_address(bucket_name))):
-              return True
-  return False
+              return(True)
+  return(False)
 
 
 def _validate_s3_obj_name_format(object_name):
   """ ensure arg is str or unicode that is no longer than 1024
-  
-  Not a public function. Only called with argument of type str.
   """
   is_valid = False
   
@@ -185,15 +175,12 @@ def _validate_s3_obj_name_format(object_name):
     if(((isinstance(object_name, str)) or (isinstance(object_name, unicode)))
         and len(object_name) < 1025):
       is_valid = True
-  
-  return is_valid
+  return(is_valid)
 
 
 def _create_custom_session(id, key, endpoint):
   """ Attempt to create a custom boto3 session to overide use of the 
   default profile located in the ".aws/credentials" file. 
-
-  Not a public function. Only called with arguments of type str.  
   """
   global custom_session
   custom_session = None
@@ -209,18 +196,16 @@ def _create_custom_session(id, key, endpoint):
                                        region_name= region) 
       except Exception as e:
         custom_session = None
-        logging.error('Boto3 exception thrown: {e}') 
+        logging.error(f'Boto3 exception thrown: {e}') 
 
 
 def _does_obj_exist(bucket_name, object_name):
   """ Does an object exist in a bucket?  Returns True or False.  A False could
   indicate that the object does not exist or that the IAM key pair used to 
   create the boto3 session does not have access permission to the bucket.
-  
-  Not a public function. Only called with arguments of type str.
   """
   global custom_session
-  exists = True
+  results = True
   
   try:
     if(custom_session is None):
@@ -231,12 +216,12 @@ def _does_obj_exist(bucket_name, object_name):
   except ClientError as e:
     error_code = int(e.response['Error']['Code'])
     if(error_code == 404):
-      exists = False
+      results = False
   except Exception as e:
-    exists = False
+    results = False
     logging.error(f'Boto3 exception thrown: {e}')  
     
-  return exists
+  return(results)
 
 
 def _does_bucket_exist(bucket_name):
@@ -244,11 +229,9 @@ def _does_bucket_exist(bucket_name):
   indicate that the bucket does not exist or that the IAM key pair
   used to create the boto3 session does not have access permission to 
   the bucket.
-  
-  Not a public function. Only called with argument of type str.
   """
   global custom_session
-  exists = True
+  results = True
 
   try:
     if(custom_session is None):
@@ -259,20 +242,21 @@ def _does_bucket_exist(bucket_name):
   except ClientError as e:
     error_code = int(e.response['Error']['Code'])
     if(error_code == 404):
-      exists = False
+      results = False
   except Exception as e:
-    exists = False
+    results = False
     logging.error(f'Boto3 exception thrown: {e}')    
  
-  return exists
+  return(results)
   
 
 def _create_s3(bucket_name, key, file, value, region, id, secret, endpoint):
   """ Create bucket using 'bucket_name' in specified region if a valid
   region is supplied in the region argument.
   
-  Not a public function. Only called with arguments of type str.
-  key, file, value, id, secret, endpoint arguments are irrelevant; not used.
+  Due to s3_man() method of translating command line input into a function
+  call, all functions sent all parameters.  This function does not use:
+  key, file, value, id, secret, endpoint
   """
   global custom_session
   result = f'The bucket named "{bucket_name}" '
@@ -303,7 +287,7 @@ def _create_s3(bucket_name, key, file, value, region, id, secret, endpoint):
     result = 'An empty or invalid bucket_name argument was supplied.'
     logging.error(result)
 
-  return result
+  return(result)
   
   
 def _delete_s3(bucket_name, key, file, value, region, id, secret, endpoint):
@@ -313,8 +297,9 @@ def _delete_s3(bucket_name, key, file, value, region, id, secret, endpoint):
   the IAM key pair used to create the boto3 session does not have access 
   permissions to the specified bucket.
   
-  Not a public function. Only called with arguments of type str.
-  key, file, value, region, id, secret, endpoint are irrelevant; not used.
+  Due to s3_man() method of translating command line input into a function
+  call, all functions sent all parameters.  This function does not use:
+  key, file, value, region, id, secret, endpoint
   """
   global custom_session
   result = f'The bucket named {bucket_name} '
@@ -345,7 +330,7 @@ def _delete_s3(bucket_name, key, file, value, region, id, secret, endpoint):
     result = 'Empty or invalid bucket name was supplied.'
     logging.error(result)
 
-  return result
+  return(result)
 
 
 def _list_s3(bucket_name, key, file, value, region, id, secret, endpoint):
@@ -354,8 +339,9 @@ def _list_s3(bucket_name, key, file, value, region, id, secret, endpoint):
   valid region identifier, return list of s3 buckets across all 
   regions. 
   
-  Not a public function. Only called with arguments of type str.  
-  bucket_name, key, file, and value are irrelevant; not used.
+  Due to s3_man() method of translating command line input into a function
+  call, all functions sent all parameters.  This function does not use:
+  bucket_name, key, file, and value
   """
   return(s3_list.s3_list(region, id=id, secret=secret, endpoint=endpoint ))
   
@@ -366,8 +352,9 @@ def _list_s3_objs(bucket_name, key, file, value, region, id, secret, endpoint):
   key pair used to create the boto3 session does not have access permissions
   to the specified bucket.
   
-  Not a public function. Only called with arguments of type str.
-  file, key, value, region, id, secret, endpoint arguments are irrelevant; not used.
+  Due to s3_man() method of translating command line input into a function
+  call, all functions sent all parameters.  This function does not use:
+  file, key, value, region, id, secret, endpoint
   """
   global custom_session
   obj_list = ''
@@ -397,7 +384,7 @@ def _list_s3_objs(bucket_name, key, file, value, region, id, secret, endpoint):
   elif(obj_list.endswith(', ')):
     obj_list = f'The objects in {bucket_name} are: ' + obj_list[:-2]
   
-  return obj_list
+  return(obj_list)
 
 
 def _delete_s3_obj(bucket_name, key, file, value, region, id, secret, endpoint):
@@ -406,8 +393,9 @@ def _delete_s3_obj(bucket_name, key, file, value, region, id, secret, endpoint):
   containing "...could not be deleted..." could indicate that the IAM key
   pair used to create the boto3 session does not have sufficient permission.
   
-  Not a public function. Only called with arguments of type str. 
-  file, value, region, id, secret, endpoint arguments are irrelevant; not used.
+  Due to s3_man() method of translating command line input into a function
+  call, all functions sent all parameters.  This function does not use:
+  file, value, region, id, secret, endpoint
   """
   global custom_session
   result = ''
@@ -428,7 +416,7 @@ def _delete_s3_obj(bucket_name, key, file, value, region, id, secret, endpoint):
             result += f'the bucket named "{bucket_name}".'
           except Exception as e:
             result = f'The object named "{key}" could not be deleted from the '
-            result += 'bucket named {bucket_name}.'
+            result += f'bucket named {bucket_name}.'
             logging.error(f'Boto3 exception thrown: {e}')
         else:
           result = f'Either the object named "{key}" does not exist or '
@@ -445,19 +433,17 @@ def _delete_s3_obj(bucket_name, key, file, value, region, id, secret, endpoint):
     result = 'The "bucket_name" argument is either empty or invalid.'
     logging.error(result)
     
-  return result
+  return(result)
   
   
 def _set_object_data(file, value):
   """ Return the 'object_data' parameter to use in boto3 call
   "s3.put_object('bucket_name', 'object_key', 'object_data')"
+  
   'object_data' can be hold either a Python bytes value or 
   a Python <ioBufferedReader> object connected to the file to
   upload as the value of the new S3 object.  None is returned
   if the argument is invalid or an exception occurs.
-  
-  Not a public function.  Only called with a value for either
-    file arg (of type str) or value arg (of type bytes) but not both. 
   """
   object_data = None
     
@@ -474,7 +460,7 @@ def _set_object_data(file, value):
     logging.error('Either a file to upload or a bytes value for new S3 ' +
                   'object must be specified')
   
-  return object_data
+  return(object_data)
 
   
 def _add_s3_obj(bucket_name, key, file, value, region, id, secret, endpoint):
@@ -484,9 +470,11 @@ def _add_s3_obj(bucket_name, key, file, value, region, id, secret, endpoint):
   object key that matches a preexisting object.  This is consistent 
   with AWS CLI behavior.
   
-  Not a public function. Only called with arguments of type str.
-  region, id, secret, endpoint arguments are irrelevant; not used.
-  The file paramter or value parameter or neither will be passed in
+  Due to s3_man() method of translating command line input into a function
+  call, all functions sent all parameters.  This function does not use:
+  region, id, secret, endpoint arguments
+  
+  NOTE: the file paramter or value parameter or neither will be passed in
   """
   global custom_session
   result = ''
@@ -526,15 +514,15 @@ def _add_s3_obj(bucket_name, key, file, value, region, id, secret, endpoint):
     result = 'Argument supplied for bucket name is invalid.'
     logging.error(result)
     
-  return result  
+  return(result)  
   
   
 def s3_man(action, bucket_name='', key='', file='', value='', region='',
            id='', secret='', endpoint=''):
   """
   Args:
-    action  (str):        Required. 'create_s3', 'delete_s3', 'list_s3', 
-                          'list_s3_objs', or 'delete_s3_obj'
+    action  (str):        Required. Can be: 'create_s3', 'delete_s3', 
+                            'list_s3', 'list_s3_objs', or 'delete_s3_obj'
     bucket  (str):        Optional. S3 bucket to apply the command to 
     key     (str):        Optional. Key of S3 object to apply command to
     file    (str):        Optional. File to upload as new S3 object
@@ -553,12 +541,12 @@ def s3_man(action, bucket_name='', key='', file='', value='', region='',
            a success / failure message for command execution
   """
   global custom_session
-  COMMANDS = {'create_s3' : _create_s3, 
-              'delete_s3' : _delete_s3, 
-              'list_s3' : _list_s3,
-              'list_s3_objs' : _list_s3_objs, 
+  COMMANDS = {'create_s3' :     _create_s3, 
+              'delete_s3' :     _delete_s3, 
+              'list_s3' :       _list_s3,
+              'list_s3_objs' :  _list_s3_objs, 
               'delete_s3_obj' : _delete_s3_obj,
-              'add_s3_obj' : _add_s3_obj 
+              'add_s3_obj' :    _add_s3_obj 
              } 
   result = '' 
   
@@ -570,7 +558,7 @@ def s3_man(action, bucket_name='', key='', file='', value='', region='',
 
     if(not (file and value)):
 
-      # For value argment supplied at OS prompt, convert to bytes value
+      # For value argument supplied at OS prompt, convert to bytes value
       if((value) and (isinstance(value, str))):
         value = bytes(value, 'utf-8') 
     
@@ -596,7 +584,7 @@ def s3_man(action, bucket_name='', key='', file='', value='', region='',
     logging.error(result)
     
   custom_session = None
-  return result
+  return(result)
 
 
 if __name__ == '__main__':

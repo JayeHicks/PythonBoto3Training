@@ -59,30 +59,27 @@ Dependencies:
   logging
   re
   boto3
-  botocore.exceptions
 """
-
 import argparse
 import logging
 import re
 import boto3
 
-__all__ = ['s3_list', 'validate_region']
-
-#logging.basicConfig(filename='s3_list.log',level=logging.INFO)
 custom_session = None
+__all__        = ['s3_list', 'validate_region']
+logging.basicConfig(filename='s3_list.log',level=logging.INFO)
+
 
 def validate_region(input_region):
   """ If arg not AWS standard region retun '' otherwise return 
   the arg passed in, in lower case.  
   """
-  
   region = ''
   if(isinstance(input_region, str)):
     region = input_region.lower()
     if(not region in boto3.Session().get_available_regions('s3')):
       region = ''
-  return region
+  return(region)
 
 
 def _create_custom_session(id, key, endpoint):
@@ -91,7 +88,6 @@ def _create_custom_session(id, key, endpoint):
   
   Not a public function.  All arguments passed in are of type str
   """
-  
   global custom_session
   custom_session = None
   if(id.isalnum and (len(id)  == 20)):
@@ -99,14 +95,13 @@ def _create_custom_session(id, key, endpoint):
       region = validate_region(endpoint)
       if(not region):
         region = 'us-east-1'
-      
       try:
         custom_session = boto3.Session(aws_access_key_id= id, 
                                        aws_secret_access_key= key,
                                        region_name= region) 
       except Exception as e:
         custom_session = None
-        logging.error('Boto3 exception thrown: {e}')  
+        logging.error(f'Boto3 exception thrown: {e}')  
          
   
 def s3_list(region, id='', secret='', endpoint=''):
@@ -127,11 +122,11 @@ def s3_list(region, id='', secret='', endpoint=''):
   Returns:
     (str): either S3 bucket names or 'no buckets were located'
   """
- 
   global custom_session
   bucket_list = ''
-  region = validate_region(region)
-  if( isinstance(id, str) and isinstance(secret, str) ):
+  region      = validate_region(region)
+  
+  if(isinstance(id, str) and isinstance(secret, str)):
     if(id and secret):
       _create_custom_session(id, secret, endpoint)
   
@@ -150,7 +145,7 @@ def s3_list(region, id='', secret='', endpoint=''):
         elif (region == loc_constraint):
           bucket_list += bucket['Name'] + ', '
     except Exception as e:
-      logging.error('Boto3 exception thrown: {e}')    
+      logging.error(f'Boto3 exception thrown: {e}')    
   else:
     try:
       if(custom_session is None):
@@ -160,7 +155,7 @@ def s3_list(region, id='', secret='', endpoint=''):
       for bucket in s3_access.buckets.all():
         bucket_list += bucket.name + ', '
     except Exception as e:
-      logging.error('Boto3 exception thrown: {e}')
+      logging.error(f'Boto3 exception thrown: {e}')
 
   if(bucket_list.endswith(', ')):
     bucket_list = bucket_list[:-2]
@@ -178,7 +173,7 @@ def s3_list(region, id='', secret='', endpoint=''):
       
   custom_session = None
       
-  return bucket_list
+  return(bucket_list)
   
   
 if __name__ == '__main__':    
